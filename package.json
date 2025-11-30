@@ -1,0 +1,14 @@
+{
+  "name": "quex",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
