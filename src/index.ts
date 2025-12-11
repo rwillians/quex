@@ -1,4 +1,3 @@
-import { z } from 'zod/v4';
 import * as std from './standard-schema';
 import * as u from './utils';
 
@@ -360,7 +359,7 @@ const types = {
    */
   binary: () => defineColumn({
     type: 'BINARY',
-    schema: z.instanceof(Uint8Array),
+    schema: std.instanceOf(Uint8Array),
   }),
   /**
    * @public  Defines a column type that accepts boolean values.
@@ -369,7 +368,7 @@ const types = {
    */
   boolean: () => defineColumn({
     type: 'BOOLEAN',
-    schema: z.boolean(),
+    schema: std.boolean(),
   }),
   /**
    * @public  Defines a column type that accepts a Date object, an
@@ -379,7 +378,7 @@ const types = {
    */
   datetime: () => defineColumn({
     type: 'DATETIME',
-    schema: z.coerce.date<Date | string | number>(),
+    schema: std.date(),
   }),
   /**
    * @public  Defines a column type that accepts floating-point numbers.
@@ -388,7 +387,7 @@ const types = {
    */
   float: () => defineColumn({
     type: 'FLOAT',
-    schema: z.number().min(Number.MIN_VALUE).max(Number.MAX_VALUE),
+    schema: std.number({ min: Number.MIN_VALUE, max: Number.MAX_VALUE }),
   }),
   /**
    * @public  Defines a column type that accepts integer numbers.
@@ -397,7 +396,7 @@ const types = {
    */
   integer: () => defineColumn({
     type: 'INTEGER',
-    schema: z.number().int().min(Number.MIN_SAFE_INTEGER).max(Number.MAX_SAFE_INTEGER),
+    schema: std.integer({ min: Number.MIN_SAFE_INTEGER, max: Number.MAX_SAFE_INTEGER }),
   }),
   /**
    * @public  Defines a column type that accepts small strings (VARCHAR,
@@ -408,7 +407,7 @@ const types = {
    */
   string: ({ size = 255 }: { size?: number } = {}) => defineColumn({
     type: 'VARCHAR',
-    schema: z.string().max(u.lte(size, 255)),
+    schema: std.string({ max: u.lte(size, 255) }),
     size,
   }),
   /**
@@ -418,7 +417,7 @@ const types = {
    */
   text: () => defineColumn({
     type: 'TEXT',
-    schema: z.string(),
+    schema: std.string(),
   }),
 };
 
