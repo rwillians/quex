@@ -50,7 +50,7 @@ const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
 const complex = await from(backups.as('b1'))
   .where(({ b1 }) => expr.and([
-    expr.in(b1.id, [1, 2]),
+    expr.in(b1.id, [1, 3, 5]),
     expr.or([
       expr.eq(b1.parentId, 1),
       expr.is(b1.parentId, null),
@@ -58,5 +58,8 @@ const complex = await from(backups.as('b1'))
     expr.isNot(b1.path, null),
     expr.gt(b1.createdAt, lastWeek),
   ]))
+  .orderBy(({ b1 }) => [[b1.createdAt, 'DESC']])
+  .limit(2)
+  .offset(0)
   .all(db);
 console.log('complex:', complex);

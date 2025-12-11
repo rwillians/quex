@@ -883,6 +883,14 @@ const is = {
 // // // // // // // // // // // // // // // // // // // // // // // //
 
 /**
+ * @public  Represents the direction of ordering in an ORDER BY
+ *          clause.
+ * @since   0.1.0
+ * @version 1
+ */
+type OrderDirection = 'ASC' | 'DESC';
+
+/**
  * @public  Represents a create table statement.
  * @since   0.1.0
  * @version 1
@@ -978,6 +986,12 @@ type SelectStatement = {
    * @version 1
    */
   where?: Expr;
+  /**
+   * @public  The query's order by clause.
+   * @since   0.1.0
+   * @version 1
+   */
+  orderBy?: (readonly [Expr, OrderDirection])[];
   /**
    * @public  The maximum number of rows to return.
    * @since   0.1.0
@@ -1264,6 +1278,12 @@ type Query<
    */
   where?: Expr;
   /**
+   * @private The query's order by clause.
+   * @since   0.1.0
+   * @version 1
+   */
+  orderBy?: (readonly [Expr, OrderDirection])[];
+  /**
    * @private The query's limit.
    * @since   0.1.0
    * @version 1
@@ -1354,6 +1374,14 @@ class QueryBuilder<
     return rows[0] as Expand<InferSelection<Query<T, S>>> | null;
   }
   /**
+   * @public  Defines the order by clause of the query.
+   * @since   0.1.0
+   * @version 1
+   */
+  orderBy(fn: (registry: T) => (readonly [Expr, OrderDirection])[]) {
+    return new QueryBuilder<T, S>({ ...this.query, orderBy: fn(this.query.registry) });
+  }
+  /**
    * @public  Defines the selection of the query.
    * @since   0.1.0
    * @version 1
@@ -1421,6 +1449,7 @@ export {
   type IDatabase,
   type ILogger,
   type InsertStatement,
+  type OrderDirection,
   type Primitive,
   type PrimitiveToNativeTypeFactory,
   type SelectStatement,

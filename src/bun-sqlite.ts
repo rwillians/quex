@@ -16,6 +16,7 @@ import {
   type IDatabase,
   type ILogger,
   type InsertStatement,
+  type OrderDirection,
   type PrimitiveToNativeTypeFactory,
   type SelectStatement,
   is,
@@ -177,10 +178,23 @@ const render = {
     const frags = Object
       .entries(selection)
       // @TODO DDL should not have to know that it needs to snake_case here
-      .map(([alias, col]) => `${render.ref(col.table)}.${render.ref(u.snakeCase(col.name))} AS ${render.ref(alias)}`);
+      .map(([alias, col]) => `${render.expr.column(col).frags.join('')} AS ${render.ref(alias)}`);
 
     return { frags: [frags.join(', ')], params: [] };
   }),
+  /**
+   * @private Renders an order by clause.
+   * @since   0.1.0
+   * @version 1
+   *
+   * Not using {@link glue} here becuase it's breaking typescript
+   * ¯\_(ツ)_/¯
+   */
+  orderBy: ([expr, dir]: readonly [Expr, OrderDirection]) => {
+    const { frags, params } = render.expr.any(expr);
+
+    return { frags: [[...frags, dir].join(' ')], params };
+  },
   /**
    * @private Expression rendering functions.
    * @since   0.1.0
@@ -390,6 +404,10 @@ const ddl = {
       ? render.expr.any(op.where)
       : EMPTY_RENDER_RESULT;
 
+    const orderBy = op.orderBy && op.orderBy.length > 0
+      ? op.orderBy.reduce(collect(render.orderBy), EMPTY_RENDER_RESULT)
+      : EMPTY_RENDER_RESULT;
+
     const limit = op.limit !== undefined
       ? { frags: [' LIMIT ', '?'], params: [op.limit] }
       : EMPTY_RENDER_RESULT;
@@ -407,6 +425,7 @@ const ddl = {
       render.ref(op.from),
       (where.frags.length > 0 ? ' WHERE ': ''),
       ...where.frags,
+      (orderBy.frags.length > 0 ? ' ORDER BY ' + orderBy.frags.join(', ') : ''),
       ...limit.frags,
       ...offset.frags,
       ';'
