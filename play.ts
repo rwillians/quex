@@ -23,9 +23,9 @@ const db = sqlite
 await create.table(backups, { ifNotExists: true }).onto(db);
 
 const rows = await into(backups)
-  .insert({ path: '/path/to/backup1', sizeBytes: 12345 })
-  .insert([{ parentId: 1, path: '/path/to/backup2', sizeBytes: 12345 }, { path: '/path/to/backup3', sizeBytes: 12345 }])
-  .run(db);
+  .values({ path: '/path/to/backup1', sizeBytes: 12345 })
+  .values([{ parentId: 1, path: '/path/to/backup2', sizeBytes: 12345 }, { path: '/path/to/backup3', sizeBytes: 12345 }])
+  .insert(db);
 console.log('inserted rows:', rows);
 
 const result = await from(backups.as('b1')).one(db);

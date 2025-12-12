@@ -1251,9 +1251,9 @@ class InsertBuilder<T extends Table> {
   /**
    * @public  Adds one or more rows to be inserted.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    */
-  insert(rows: InferForInsert<T> | InferForInsert<T>[]) {
+  values(rows: InferForInsert<T> | InferForInsert<T>[]) {
     this.rows.push(...(u.wrap(rows)));
 
     return this;
@@ -1263,7 +1263,7 @@ class InsertBuilder<T extends Table> {
    * @since   0.1.0
    * @version 1
    */
-  async run(db: IDatabase) {
+  async insert(db: IDatabase) {
     if (this.rows.length === 0) return [];
 
     const insertShape = getInsertShape(this.table);
