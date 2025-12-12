@@ -1353,6 +1353,17 @@ class QueryBuilder<
     return db.query(toSelectStatement(this.query)) as Promise<Expand<InferSelection<Query<T, S>>>[]>;
   }
   /**
+   * @public  Checks whether any rows exist matching the query.
+   * @since   0.1.6
+   * @version 1
+   */
+  async exists(db: IDatabase) {
+    // @TODO optimize this, maybe do a SELECT 1 or something
+    const results = await db.query(toSelectStatement({ ...this.query, limit: 1, offset: 0 }));
+
+    return results.length > 0;
+  }
+  /**
    * @public  Sets a limit on the number of rows to be returned.
    * @since   0.1.0
    * @version 1
