@@ -1,5 +1,6 @@
 node_modules/
 .ignore/
+build/
 dist/
 .envrc
 .DS_Store

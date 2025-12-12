@@ -1401,31 +1401,9 @@ class QueryBuilder<
    * @version 1
    */
   innerJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
-    const registry = {
-      ...this.query.registry,
-      [table[TABLE_ALIAS]]: table,
-    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
-
+    const registry = { ...this.query.registry, [table[TABLE_ALIAS]]: table } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
     const join: Join = { type: 'INNER JOIN', table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
 
-    return new QueryBuilder<typeof registry, S>({
-      ...this.query,
-      registry,
-      joins: [...(this.query.joins ?? []), join],
-    });
-  }
-  /**
-   * @public  Adds a LEFT OUTER JOIN clause to the query.
-   * @since   0.1.9
-   * @version 1
-   */
-  leftJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
-    const registry = {
-      ...this.query.registry,
-      [table[TABLE_ALIAS]]: table,
-    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
-
-    const join: Join = { type: 'LEFT OUTER JOIN',  table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
     return new QueryBuilder<typeof registry, S>({
       ...this.query,
       registry,
@@ -1470,25 +1448,6 @@ class QueryBuilder<
    */
   orderBy(fn: (registry: T) => (readonly [Expr, OrderDirection])[]) {
     return new QueryBuilder<T, S>({ ...this.query, orderBy: fn(this.query.registry) });
-  }
-  /**
-   * @public  Adds a RIGHT OUTER JOIN clause to the query.
-   * @since   0.1.9
-   * @version 1
-   */
-  rightJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
-    const registry = {
-      ...this.query.registry,
-      [table[TABLE_ALIAS]]: table,
-    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
-
-    const join: Join = { type: 'RIGHT OUTER JOIN',  table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
-
-    return new QueryBuilder<typeof registry, S>({
-      ...this.query,
-      registry,
-      joins: [...(this.query.joins ?? []), join],
-    });
   }
   /**
    * @public  Defines the selection of the query.

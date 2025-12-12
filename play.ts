@@ -64,22 +64,11 @@ const complex = await from(backups.as('b1'))
   .all(db);
 console.log('complex:', complex);
 
-const rij = await from(backups.as('b1'))
+const rj = await from(backups.as('b1'))
   .innerJoin(backups.as('b2'), ({ b1, b2 }) => expr.eq(b2.id, b1.parentId))
-  .all(db);
-console.log('self join:', rij);
-
-const rlj = await from(backups.as('b1'))
-  .innerJoin(backups.as('b2'), ({ b1, b2 }) => expr.eq(b2.id, b1.parentId))
-  .leftJoin(backups.as('b3'), ({ b2, b3 }) => expr.eq(b3.id, b2.parentId))
-  .leftJoin(backups.as('b4'), ({ b3, b4 }) => expr.eq(b4.id, b3.parentId))
-  .rightJoin(backups.as('b5'), ({ b4, b5 }) => expr.eq(b5.id, b4.parentId))
-  .select(({ b1, b2, b3, b4, b5 }) => ({
+  .select(({ b1, b2 }) => ({
     aid: b1.id,
     bid: b2.id,
-    cid: b3.id,
-    did: b4.id,
-    eid: b5.id,
   }))
   .all(db);
-console.log('self left join:', rlj);
+console.log('inner join:', rj);
