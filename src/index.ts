@@ -337,6 +337,16 @@ class ColumnPropsBuilder<T extends ColumnProps = ColumnProps> {
       primaryKey: true;
     }>);
   }
+  /**
+   * @public  Marks the column as unique.
+   * @since   0.1.0
+   * @version 1
+   */
+  unique() {
+    return new ColumnPropsBuilder({ ...this.props, unique: true } as Expand<T & {
+      unique: true;
+    }>);
+  }
 }
 
 /**
