@@ -63,10 +63,9 @@ type ColumnProps<T extends std.Schema = std.Schema> = {
    */
   autoincrement?: true;
   /**
-   * @public  The default value for the column or a function that
-   *          returns it. If a column has no value (nullish) and
-   *          default function was provided, then it will be called
-   *          once for each row right before its insertion.
+   * @public  The default value for the column. If a column has
+   *          nullish value in an insert, then this value will be used
+   *          instead.
    * @since   0.1.0
    * @version 1
    */
@@ -116,7 +115,7 @@ type ColumnProps<T extends std.Schema = std.Schema> = {
 /**
  * @public  A column definition.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 type Column<S extends string = string, T extends ColumnProps = ColumnProps> = Expand<T & {
   /**
@@ -135,15 +134,15 @@ type Column<S extends string = string, T extends ColumnProps = ColumnProps> = Ex
   /**
    * @public  The column's input type, cached.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    */
-  inputType: std.input<T['schema']>;
+  inferInput: std.input<T['schema']>;
   /**
    * @public  The column's output type, cached.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    */
-  outputType: std.output<T['schema']>;
+  inferOutput: std.output<T['schema']>;
 }>;
 
 /**
@@ -227,30 +226,30 @@ type OmitOnUpdate = { autoincrement: true } | { primaryKey: true };
 /**
  * @private Infers the output type of a table's row.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 type Infer<T extends Table> = {
-  [K in keyof T['columns']]: T['columns'][K]['outputType'];
+  [K in keyof T['columns']]: T['columns'][K]['inferOutput'];
 };
 
 /**
  * @private Infers the input type required to insert a new row.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 type InferForInsert<T extends Table> = Expand<{
-  [K in keyof T['columns']as T['columns'][K] extends OmitOnInsert | OptionalOnInsert ? never : K]: T['columns'][K]['inputType'];
+  [K in keyof T['columns']as T['columns'][K] extends OmitOnInsert | OptionalOnInsert ? never : K]: T['columns'][K]['inferInput'];
 } & {
-  [K in keyof T['columns']as T['columns'][K] extends OptionalOnInsert ? K : never]?: T['columns'][K]['inputType'];
+  [K in keyof T['columns']as T['columns'][K] extends OptionalOnInsert ? K : never]?: T['columns'][K]['inferInput'];
 }>;
 
 /**
  * @private Infers the input type required to update an existing row.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 type InferForUpdate<T extends Table> = {
-  [K in keyof T['columns']as T['columns'][K] extends OmitOnUpdate ? never : K]?: T['columns'][K]['inputType'];
+  [K in keyof T['columns']as T['columns'][K] extends OmitOnUpdate ? never : K]?: T['columns'][K]['inferInput'];
 };
 
 /**
@@ -282,7 +281,7 @@ type Inferrable<T extends Table> = T & {
 /**
  * @private A builder for column properties.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 class ColumnPropsBuilder<T extends ColumnProps = ColumnProps> {
   constructor(public readonly props: T) { }
@@ -299,23 +298,26 @@ class ColumnPropsBuilder<T extends ColumnProps = ColumnProps> {
     }>);
   }
   /**
-   * @public  Sets a default value for the column.
+   * @public  Sets a default value for the column. This is not the
+   *          table's default value for the column, but rather a
+   *          fallback value that qx will use when inserting a new row
+   *          where this column is nullish.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    */
-  default<S extends std.output<T['schema']>, U extends S | (() => S)>(value: U) {
+  default<S extends std.output<T['schema']> | (() => std.output<T['schema']>)>(value: S) {
     return new ColumnPropsBuilder({ ...this.props, default: value } as Expand<T & {
-      default: U;
+      default: S;
     }>);
   }
   /**
    * @public  Marks the column as nullable.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    * @throws {Error} if the column is a primary key.
    */
   nullable() {
-    if (this.props.primaryKey) throw new Error('Cannot set nullable on a primary key column');
+    if (this.props.primaryKey) throw new Error('Cannot make a primary key column nullable');
 
     const { schema, ...props } = this.props;
 
@@ -340,9 +342,11 @@ class ColumnPropsBuilder<T extends ColumnProps = ColumnProps> {
   /**
    * @public  Marks the column as unique.
    * @since   0.1.0
-   * @version 1
+   * @version 2
    */
   unique() {
+    if (this.props.primaryKey) throw new Error('Primary key columns are already unique');
+
     return new ColumnPropsBuilder({ ...this.props, unique: true } as Expand<T & {
       unique: true;
     }>);
@@ -1359,10 +1363,10 @@ type Query<
 /**
  * @private Infers the selection output type of given query.
  * @since   0.1.0
- * @version 1
+ * @version 2
  */
 type InferSelection<T extends Query> = {
-  [K in keyof T['select'] & string]: T['select'][K]['outputType'];
+  [K in keyof T['select'] & string]: T['select'][K]['inferOutput'];
 };
 
 /**

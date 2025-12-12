@@ -1,4 +1,4 @@
-# qx (provisory name)
+# qx
 
 A teeny tiny, type-safe and dependency-free ORM for TypeScript and
 JavaScript.
