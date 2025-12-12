@@ -979,17 +979,23 @@ type SelectStatement = {
    */
   registry: Record<string, string>,
   /**
+   * @public  The query's selection.
+   * @since   0.1.0
+   * @version 1
+   */
+  select: Record<string, Column>;
+  /**
    * @public  The alias of the table from which to select.
    * @since   0.1.0
    * @version 1
    */
   from: string;
   /**
-   * @public  The query's selection.
-   * @since   0.1.0
+   * @public  The query's join clauses.
+   * @since   0.1.9
    * @version 1
    */
-  select: Record<string, Column>;
+  joins?: Join[];
   /**
    * @public  The query's where clause.
    * @since   0.1.0
@@ -1262,6 +1268,18 @@ const into = <T extends Table>(table: T) => new InsertBuilder(table);
 // // // // // // // // // // // // // // // // // // // // // // // //
 
 /**
+ * @public  Represents a join clause in a select statement.
+ * @since   0.1.9
+ * @version 1
+ */
+type Join = {
+  type: 'INNER JOIN' | 'LEFT OUTER JOIN' | 'RIGHT OUTER JOIN';
+  table: string;
+  alias: string;
+  on: Expr;
+};
+
+/**
  * @private It's the object type for a query being built, that will
  *          later been transformed into a {@link SelectStatement}.
  * @since   0.1.0
@@ -1278,17 +1296,23 @@ type Query<
    */
   registry: T;
   /**
+   * @private The query's selection.
+   * @since   0.1.0
+   * @version 1
+   */
+  select: S;
+  /**
    * @private The alias of the table from which to select.
    * @since   0.1.0
    * @version 1
    */
   from: string;
   /**
-   * @private The query's selection.
-   * @since   0.1.0
+   * @private The query's join clauses.
+   * @since   0.1.9
    * @version 1
    */
-  select: S;
+  joins?: Join[];
   /**
    * @private The query's where clause.
    * @since   0.1.0
@@ -1372,6 +1396,43 @@ class QueryBuilder<
     return results.length > 0;
   }
   /**
+   * @public  Adds an INNER JOIN clause to the query.
+   * @since   0.1.9
+   * @version 1
+   */
+  innerJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
+    const registry = {
+      ...this.query.registry,
+      [table[TABLE_ALIAS]]: table,
+    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
+
+    const join: Join = { type: 'INNER JOIN', table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
+
+    return new QueryBuilder<typeof registry, S>({
+      ...this.query,
+      registry,
+      joins: [...(this.query.joins ?? []), join],
+    });
+  }
+  /**
+   * @public  Adds a LEFT OUTER JOIN clause to the query.
+   * @since   0.1.9
+   * @version 1
+   */
+  leftJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
+    const registry = {
+      ...this.query.registry,
+      [table[TABLE_ALIAS]]: table,
+    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
+
+    const join: Join = { type: 'LEFT OUTER JOIN',  table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
+    return new QueryBuilder<typeof registry, S>({
+      ...this.query,
+      registry,
+      joins: [...(this.query.joins ?? []), join],
+    });
+  }
+  /**
    * @public  Sets a limit on the number of rows to be returned.
    * @since   0.1.0
    * @version 1
@@ -1409,6 +1470,25 @@ class QueryBuilder<
    */
   orderBy(fn: (registry: T) => (readonly [Expr, OrderDirection])[]) {
     return new QueryBuilder<T, S>({ ...this.query, orderBy: fn(this.query.registry) });
+  }
+  /**
+   * @public  Adds a RIGHT OUTER JOIN clause to the query.
+   * @since   0.1.9
+   * @version 1
+   */
+  rightJoin<U extends Aliased<string, Table>>(table: U, on: (registry: Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>) => Expr) {
+    const registry = {
+      ...this.query.registry,
+      [table[TABLE_ALIAS]]: table,
+    } as Expand<T & { [K in U[typeof TABLE_ALIAS]]: U }>;
+
+    const join: Join = { type: 'RIGHT OUTER JOIN',  table: table[TABLE_NAME], alias: table[TABLE_ALIAS], on: on(registry) };
+
+    return new QueryBuilder<typeof registry, S>({
+      ...this.query,
+      registry,
+      joins: [...(this.query.joins ?? []), join],
+    });
   }
   /**
    * @public  Defines the selection of the query.
@@ -1477,6 +1557,7 @@ export {
   type ExprOr,
   type IDatabase,
   type ILogger,
+  type Join,
   type InsertStatement,
   type OrderDirection,
   type Primitive,

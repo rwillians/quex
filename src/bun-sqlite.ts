@@ -16,6 +16,7 @@ import {
   type IDatabase,
   type ILogger,
   type InsertStatement,
+  type Join,
   type OrderDirection,
   type PrimitiveToNativeTypeFactory,
   type SelectStatement,
@@ -195,6 +196,19 @@ const render = {
 
     return { frags: [[...frags, dir].join(' ')], params };
   },
+  /**
+   * @private Renders a join clause.
+   * @since   0.1.9
+   * @version 1
+   */
+  join: glue((join: Join): RenderResult => {
+    const result = render.expr.any(join.on);
+
+    return {
+      frags: [' ', join.type, ' ', render.ref(join.table), ' AS ', render.ref(join.alias), ' ON ', ...result.frags],
+      params: result.params,
+    };
+  }),
   /**
    * @private Expression rendering functions.
    * @since   0.1.0
@@ -400,6 +414,10 @@ const ddl = {
    * @version 1
    */
   select: (op: SelectStatement): DDL => {
+    const joins = op.joins && op.joins.length > 0
+      ? op.joins.reduce(collect(render.join), EMPTY_RENDER_RESULT)
+      : EMPTY_RENDER_RESULT;
+
     const where = op.where
       ? render.expr.any(op.where)
       : EMPTY_RENDER_RESULT;
@@ -423,6 +441,7 @@ const ddl = {
       render.ref(op.registry[op.from]!),
       ' AS ',
       render.ref(op.from),
+      ...joins.frags,
       (where.frags.length > 0 ? ' WHERE ': ''),
       ...where.frags,
       (orderBy.frags.length > 0 ? ' ORDER BY ' + orderBy.frags.join(', ') : ''),
@@ -431,7 +450,7 @@ const ddl = {
       ';'
     ];
 
-    return { sql: frags.join(''), params: [...where.params, ...limit.params, ...offset.params] };
+    return { sql: frags.join(''), params: [...joins.params, ...where.params, ...limit.params, ...offset.params] };
   },
 };
 
