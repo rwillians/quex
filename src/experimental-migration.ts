@@ -21,16 +21,17 @@ type Migration = (db: IDatabase) => Promise<void>;
 export const defineMigrations = (migs: Record<string, Migration>) => async (db: IDatabase) => {
   await create.table(migrations, { ifNotExists: true }).onto(db);
 
-  for (const [id, migrate] of Object.entries(migs)) {
-    const alreadyMigrated = await from(migrations.as('m'))
-      .where(({ m }) => expr.eq(m.id, id))
-      .exists(db);
+  const { mostRecentId } = await from(migrations.as('m'))
+    .orderBy(({ m }) => [[m.timestamp, 'DESC']])
+    .select(({ m }) => ({ mostRecentId: m.id }))
+    .one(db) || { mostRecentId: '' };
 
-    if (alreadyMigrated) continue;
+  for (const [id, migrate] of Object.entries(migs)) {
+    if (id < mostRecentId) continue;
 
     await transaction(db, async () => {
       await migrate(db);
-      await into(migrations).insert({ id, timestamp: new Date() }).run(db);
+      await into(migrations).values({ id, timestamp: new Date() }).insert(db);
     });
   }
 };
