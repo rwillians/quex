@@ -1,4 +1,4 @@
-import { type IDatabase, create, expr, from, into, table } from './index';
+import { type IDatabase, create, expr, from, into, table, transaction } from './index';
 
 const migrations = table('schema_migrations', t => ({
   id: t.string({ size: 36 }).primaryKey(),
@@ -16,23 +16,21 @@ type Migration = (db: IDatabase) => Promise<void>;
  * @public  Defines a set of migrations to be executed against a
  *          database.
  * @since   0.1.6
- * @version 1
+ * @version 2
  */
 export const defineMigrations = (migs: Record<string, Migration>) => async (db: IDatabase) => {
   await create.table(migrations, { ifNotExists: true }).onto(db);
 
-  for (const [id, migration] of Object.entries(migs)) {
+  for (const [id, migrate] of Object.entries(migs)) {
     const alreadyMigrated = await from(migrations.as('m'))
       .where(({ m }) => expr.eq(m.id, id))
       .exists(db);
 
     if (alreadyMigrated) continue;
 
-    // @TODO run in a transaction
-    await migration(db);
-
-    await into(migrations)
-      .insert({ id, timestamp: new Date() })
-      .run(db);
+    await transaction(db, async () => {
+      await migrate(db);
+      await into(migrations).insert({ id, timestamp: new Date() }).run(db);
+    });
   }
 };

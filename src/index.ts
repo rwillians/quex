@@ -1127,7 +1127,24 @@ interface IDatabase {
    * @version 1
    */
   query(op: SelectStatement): Promise<any[]>;
+  /**
+   * @public  Executes a function within a transaction.
+   * @since   0.1.10
+   * @version 1
+   */
+  transaction<T>(fn: () => Promise<T>): Promise<T>;
 };
+
+// // // // // // // // // // // // // // // // // // // // // // // //
+//                            TRANSACTION                            //
+// // // // // // // // // // // // // // // // // // // // // // // //
+
+/**
+ * @public  Executes the given function within a transaction.
+ * @since   0.1.10
+ * @version 1
+ */
+const transaction = async <T>(db: IDatabase, fn: () => Promise<T>): Promise<T> => db.transaction(fn);
 
 // // // // // // // // // // // // // // // // // // // // // // // //
 //                         CREATE STATEMENTS                         //
@@ -1529,5 +1546,6 @@ export {
   from,
   into,
   is,
+  transaction,
   types as t,
 };

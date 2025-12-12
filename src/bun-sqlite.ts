@@ -554,6 +554,14 @@ class BunSQLite implements IDatabase {
 
     return rows.map(createDecoder(op.select));
   }
+  /**
+   * @public  Executes a function within a transaction.
+   * @since   0.1.10
+   * @version 1
+   */
+  async transaction<T>(fn: () => Promise<T>): Promise<T> {
+    return await this.conn.transaction(fn)();
+  }
 }
 
 /**
