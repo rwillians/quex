@@ -21,6 +21,7 @@ import {
   type PrimitiveToNativeTypeFactory,
   type SelectStatement,
   is,
+  withLoggedQuery,
 } from './adapter';
 
 /**
@@ -517,10 +518,9 @@ class BunSQLite implements IDatabase {
    * @version 1
    */
   async createTable(op: CreateTableStatement) {
-    const { sql } = ddl.createTable(op);
+    const { sql, params } = ddl.createTable(op);
 
-    this.loggers.forEach(logger => logger.query.debug(sql, []));
-    this.conn.run(sql);
+    await withLoggedQuery(this.loggers, { sql, params }, () => this.conn.run(sql));
   }
   /**
    * @public  Executes an insert statement.
@@ -534,9 +534,9 @@ class BunSQLite implements IDatabase {
       insertShape: u.mapKeys(op.insertShape, u.snakeCase),
     });
 
-    this.loggers.forEach(logger => logger.query.debug(sql, params));
-    const stmt = this.conn.prepare(sql);
-    const rows = stmt.all(...params) as Record<string, any>[];
+    const rows = await withLoggedQuery(this.loggers, { sql, params }, () => this.conn
+      .prepare(sql)
+      .all(...params) as Record<string, any>[]);
 
     return rows.map(createDecoder(op.returnShape));
   }
@@ -548,9 +548,9 @@ class BunSQLite implements IDatabase {
   async query(op: SelectStatement) {
     const { sql, params } = ddl.select(op);
 
-    this.loggers.forEach(logger => logger.query.debug(sql, params));
-    const stmt = this.conn.prepare(sql);
-    const rows = stmt.all(...params) as Record<string, any>[];
+    const rows = await withLoggedQuery(this.loggers, { sql, params }, () => this.conn
+      .prepare(sql)
+      .all(...params) as Record<string, any>[]);
 
     return rows.map(createDecoder(op.select));
   }
@@ -560,7 +560,7 @@ class BunSQLite implements IDatabase {
    * @version 1
    */
   async transaction<T>(fn: () => Promise<T>): Promise<T> {
-    return await this.conn.transaction(fn)();
+    return this.conn.transaction(fn)();
   }
 }
 
@@ -572,7 +572,7 @@ class BunSQLite implements IDatabase {
 const connect = (...args: ConstructorParameters<typeof Database>) => new BunSQLite(new Database(...args));
 
 /**
- * @public  An in-memory database connection.
+ * @public  Creates a connection to an in-memory database.
  * @since   0.1.12
  * @version 2
  */
