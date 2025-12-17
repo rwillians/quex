@@ -30,6 +30,12 @@
       "require": "./dist/cjs/index.js",
       "default": "./dist/cjs/index.js"
     },
+    "./adapter": {
+      "types": "./dist/types/adapter.d.ts",
+      "import": "./dist/esm/adapter.js",
+      "require": "./dist/cjs/adapter.js",
+      "default": "./dist/cjs/adapter.js"
+    },
     "./bun-sqlite": {
       "types": "./dist/types/bun-sqlite.d.ts",
       "import": "./dist/esm/bun-sqlite.js",

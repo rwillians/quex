@@ -21,7 +21,7 @@ import {
   type PrimitiveToNativeTypeFactory,
   type SelectStatement,
   is,
-} from './index';
+} from './adapter';
 
 /**
  * @private Mapping of qx's primitive types to SQLite native types.
