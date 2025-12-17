@@ -1,9 +1,39 @@
 /**
- * @private Converts a snake_case string to camelCase.
- * @since   0.1.0
+ * @private Converts a snake_case string to camelCase at the type
+ *          level.
+ * @since   0.1.17
  * @version 1
  */
-export const camelCase = (str: string): string => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+type CamelCase<S extends string> = S extends `${infer T}_${infer U}`
+  ? `${T}${Capitalize<CamelCase<U>>}`
+  : S;
+
+/**
+ * @private Converts a camelCase string to snake_case at the type
+ *          level.
+ * @since   0.1.17
+ * @version 1
+ */
+type SnakeCase<S extends string> = S extends `${infer T}${infer U}`
+  ? U extends Uncapitalize<U>
+    ? `${Lowercase<T>}${SnakeCase<U>}`
+    : `${Lowercase<T>}_${SnakeCase<Uncapitalize<U>>}`
+  : S;
+
+/**
+ * @private Converts a snake_case string to camelCase.
+ * @since   0.1.0
+ * @version 2
+ */
+export const camelCase = <T extends string>(str: T) => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase()) as CamelCase<T>;
+
+/**
+ * @private Same as {@link Object.prototype.entries} but with better
+ *          types.
+ * @since   0.1.17
+ * @version 1
+ */
+export const entries = <T extends Record<string, any>>(obj: T) => Object.entries(obj) as [keyof T, T[keyof T]][];
 
 /**
    * @private Simplified check for plain objects.
@@ -18,6 +48,14 @@ export const isPlainObject = (value: unknown): value is Record<string, any> => {
 
   return proto === Object.prototype;
 };
+
+/**
+ * @private Same as {@link Object.prototype.keys} but with better
+ *          types.
+ * @since   0.1.17
+ * @version 1
+ */
+export const keys = <T extends Record<string, any>>(obj: T) => Object.keys(obj) as (keyof T)[];
 
 /**
    * @private Throws an error if the given number is greater than the
@@ -39,9 +77,7 @@ export const mapKeys = <T extends Record<string, any>, U extends string>(
   obj: T,
   fn: (key: keyof T) => U,
 ): { [K in U]: T[keyof T] } => Object.fromEntries(
-  Object.entries(obj).map(
-    ([key, value]) => [fn(key as keyof T), value] as const,
-  ),
+  entries(obj).map(([key, value]) => [fn(key), value] as const),
 ) as { [K in U]: T[keyof T] };
 
 /**
@@ -53,9 +89,7 @@ export const mapValues = <T extends Record<string, any>, U>(
   obj: T,
   fn: (value: T[keyof T], key: keyof T) => U,
 ): { [K in keyof T]: U } => Object.fromEntries(
-  Object.entries(obj).map(
-    ([key, value]) => [key, fn(value, key as keyof T)] as const,
-  ),
+  entries(obj).map(([key, value]) => [key, fn(value, key as keyof T)] as const),
 ) as { [K in keyof T]: U };
 
 /**
@@ -72,7 +106,7 @@ export const resolve = <T>(value: T | (() => T)): T => typeof value === 'functio
  * @since   0.1.0
  * @version 1
  */
-export const snakeCase = (str: string): string => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+export const snakeCase = <T extends string>(str: T) => str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`) as SnakeCase<T>;
 
 /**
    * @public  Wraps the given value in an array, unless it's already an
