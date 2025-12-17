@@ -17,7 +17,7 @@ import {
  * @since   0.1.0
  * @version 1
  */
-const create = {
+export const create = {
   /**
    * @public  Prepares a create table statement.
    * @since   0.1.0
