@@ -1,6 +1,6 @@
 {
   "name": "@rwillians/qx",
-  "description": "A teeny tiny ORM for SQLite.",
+  "description": "A zero-dependencies teeny tiny ORM for SQLite.",
   "version": "0.1.17",
   "author": "Rafael Willians <me@rwillians.com>",
   "license": "MIT",
@@ -21,7 +21,8 @@
     "bun"
   ],
   "type": "module",
-  "module": "dist/index.js",
+  "module": "dist/esm/index.js",
+  "main": "dist/cjs/index.js",
   "files": ["dist/", "LICENSE"],
   "exports": {
     ".": {
